@@ -1,9 +1,9 @@
-package com.example.images.servicees;
+package com.example.images.services;
 
 import com.example.images.models.Image;
-import com.example.images.models.String64ImageDTO;
+import com.example.images.models.Base64ImageDTO;
 import com.example.images.repositories.ImageRepository;
-import com.example.images.utils.ImageUtil;
+import com.example.images.utils.FileUtil;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,7 +27,7 @@ public class ImageService {
     }
 
     public ResponseEntity<?> upload(MultipartFile img, @Nullable Long id) {
-        if (!ImageUtil.isValid(img)) {
+        if (!FileUtil.isValidImage(img)) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body("img file of type image is required");
@@ -46,6 +47,7 @@ public class ImageService {
         if (byId.isPresent()) {
             Image foundImage = byId.get();
             return ResponseEntity.ok()
+                    .contentType(FileUtil.getMediaType(foundImage.getType()))
                     .body(foundImage.getImg());
         }
             return ResponseEntity.notFound().build();
@@ -53,9 +55,10 @@ public class ImageService {
 
     public ResponseEntity<?> getAll() {
         List<Image> images = repo.findAll();
-        List<String64ImageDTO> stringImages = images.stream().map(String64ImageDTO::new).toList();
+        List<Base64ImageDTO> stringImages = images.stream().map(Base64ImageDTO::new).toList();
         return images.isEmpty() ?
-                ResponseEntity.notFound().build() :
+                //ResponseEntity.notFound().build() :
+                ResponseEntity.ok(Collections.EMPTY_LIST) :
                 ResponseEntity.ok(stringImages);
     }
 }
